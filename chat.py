@@ -14,18 +14,35 @@ st.title("Chatbot Union IT")
 if "historico" not in st.session_state:
     st.session_state["historico"] = []
 
+# Variável para armazenar o conteúdo do arquivo
+if "conteudo_arquivo" not in st.session_state:
+    st.session_state["conteudo_arquivo"] = ""
+
 def obter_resposta(pergunta):
+    # Cria a mensagem de sistema com o conteúdo do arquivo
+    mensagens = []
+    if st.session_state["conteudo_arquivo"]:
+        mensagens.append({"role": "system", "content": f"Use as informações do seguinte arquivo para responder: {st.session_state['conteudo_arquivo']}"})
+    mensagens.append({"role": "user", "content": pergunta})
+
     resposta = openai.ChatCompletion.create(
-        model="gpt-4o-mini",  # Ou "gpt-4" se você tiver acesso
-        messages=[
-            {"role": "user", "content": pergunta},
-        ],
+        model="gpt-3.5-turbo",  # Ou "gpt-4" se você tiver acesso
+        messages=mensagens,
         max_tokens=150,
         n=1,
         stop=None,
         temperature=0.7,
     )
     return resposta.choices[0].message['content'].strip()
+
+# Componente para upload de arquivo
+uploaded_file = st.file_uploader("Faça o upload de um arquivo", type=["txt", "csv"])
+
+if uploaded_file is not None:
+    # Lê o conteúdo do arquivo
+    file_contents = uploaded_file.read().decode("utf-8")
+    st.session_state["conteudo_arquivo"] = file_contents  # Armazena o conteúdo na sessão
+    st.text_area("Conteúdo do arquivo:", value=file_contents, height=200)
 
 entrada_usuario = st.text_input("Você:", key="entrada")
 
